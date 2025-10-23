@@ -55,7 +55,7 @@ export default {
     const handleLogin = async () => {
       const payload = { username: loginForm.value.username, password: loginForm.value.password }
       try {
-        const response = await axios.post('http://localhost:8000/person/login', payload, { headers: { 'Content-Type': 'application/json' } })
+        const response = await axios.post('http://localhost:8081/person/login', payload, { headers: { 'Content-Type': 'application/json' } })
         if (response.data && response.data.code === '200') {
           if (response.data.token) window.localStorage.setItem('jwt_token', response.data.token)
           router.push({ path: '/HelloWorld', query: { user: response.data.data } })

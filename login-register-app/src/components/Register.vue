@@ -17,6 +17,12 @@
         <h3>注册</h3>
         <form @submit.prevent="handleRegister" class="form">
           <div class="input-group">
+            <i class="fa fa-user input-icon"></i>
+            <label class="input-label">用户名：</label>
+            <input type="text" v-model="registerForm.username" placeholder="请输入用户名" required>
+          </div>
+          
+          <div class="input-group">
             <i class="fa fa-envelope input-icon"></i>
             <label class="input-label">邮箱：</label>
             <input type="email" v-model="registerForm.email" placeholder="请输入邮箱地址" required>
@@ -61,7 +67,7 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { authAPI } from '../services/api.js'
 
 export default {
   name: 'Register',
@@ -70,7 +76,7 @@ export default {
     const showRegister = ref(true)
     const countdown = ref(0)
     const isCountingDown = ref(false)
-    const registerForm = ref({ email: '', verificationCode: '', password: '', confirmPassword: '' })
+    const registerForm = ref({ username: '', email: '', verificationCode: '', password: '', confirmPassword: '' })
 
     const switchToLogin = () => {
       router.push('/login')
@@ -82,17 +88,17 @@ export default {
         return
       }
       const payload = {
+        username: registerForm.value.username,
         email: registerForm.value.email,
-        verificationCode: registerForm.value.verificationCode,
         password: registerForm.value.password
       }
       try {
-        const response = await axios.post('http://localhost:8000/person/register', payload, { headers: { 'Content-Type': 'application/json' } })
-        if (response.data && response.data.code === '200') {
+        const response = await authAPI.register(payload)
+        if (response.data && response.data.success) {
           alert('注册成功，请登录')
           router.push('/login')
         } else {
-          alert('注册失败')
+          alert('注册失败：' + (response.data.message || '未知错误'))
         }
       } catch (error) {
         alert('注册失败')
@@ -106,10 +112,8 @@ export default {
       }
 
       try {
-        const response = await axios.post('http://localhost:8000/person/send-verification', {
-          email: registerForm.value.email
-        })
-        
+        const response = await authAPI.sendVerification(registerForm.value.email)
+
         if (response.data.success) {
           alert('验证码已发送到您的邮箱')
           startCountdown()
@@ -544,4 +548,5 @@ body {
   }
 }
 </style>
+
 

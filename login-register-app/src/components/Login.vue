@@ -40,7 +40,7 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { authAPI } from '../services/api.js'
 
 export default {
   name: 'Login',
@@ -56,9 +56,16 @@ export default {
     const handleLogin = async () => {
       const payload = { username: loginForm.value.username, password: loginForm.value.password }
       try {
-        const response = await axios.post('http://localhost:8000/person/login', payload, { headers: { 'Content-Type': 'application/json' } })
-        if (response.data && response.data.code === '200') {
-          if (response.data.token) window.localStorage.setItem('jwt_token', response.data.token)
+        const response = await authAPI.login(payload)
+        // 处理不同的响应格式
+        if (typeof response.data === 'string' && response.data === 'OK') {
+          // 后端返回简单字符串的情况
+          router.push({ path: '/HelloWorld', query: { user: { username: loginForm.value.username } } })
+        } else if (response.data && response.data.success) {
+          // 后端返回ApiResponse格式的情况
+          if (response.data.data && response.data.data.token) {
+            window.localStorage.setItem('jwt_token', response.data.data.token)
+          }
           router.push({ path: '/HelloWorld', query: { user: response.data.data } })
         } else {
           router.push({ path: '/Fail' })
@@ -444,4 +451,5 @@ body {
   }
 }
 </style>
+
 

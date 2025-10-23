@@ -64,7 +64,7 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { authAPI } from '../services/api.js'
 
 export default {
   name: 'ResetPassword',
@@ -93,15 +93,19 @@ export default {
       }
 
       try {
-        const response = await axios.post('http://localhost:8080/person/reset-password', payload, {
-          headers: { 'Content-Type': 'application/json' }
-        })
+        const response = await authAPI.resetPassword(payload)
         
-        if (response.data.success) {
+        // 处理不同的响应格式
+        if (typeof response.data === 'string' && response.data === 'OK') {
+          // 后端返回简单字符串的情况
+          alert('重置密码成功！')
+          router.push('/')
+        } else if (response.data.success) {
+          // 后端返回ApiResponse格式的情况
           alert('重置密码成功！')
           router.push('/')
         } else {
-          alert('重置失败：' + response.data.message)
+          alert('重置失败：' + (response.data.message || '未知错误'))
         }
       } catch (error) {
         console.error('重置密码错误:', error)
@@ -116,9 +120,7 @@ export default {
       }
 
       try {
-        const response = await axios.post('http://localhost:8080/person/send-verification', {
-          email: resetForm.value.email
-        })
+        const response = await authAPI.sendVerification(resetForm.value.email)
         
         if (response.data.success) {
           alert('验证码已发送到您的邮箱')
