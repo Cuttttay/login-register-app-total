@@ -41,6 +41,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authAPI } from '../services/api.js'
+import { saveToken } from '../utils/auth.js'
 
 export default {
   name: 'Login',
@@ -54,20 +55,37 @@ export default {
     }
 
     const handleLogin = async () => {
+      console.log('=== 登录函数被调用 ===')
+      console.log('用户名:', loginForm.value.username)
+      console.log('密码:', loginForm.value.password)
+      
       const payload = { username: loginForm.value.username, password: loginForm.value.password }
       try {
+        console.log('准备发送登录请求...')
         const response = await authAPI.login(payload)
-        // 处理不同的响应格式
-        if (typeof response.data === 'string' && response.data === 'OK') {
-          // 后端返回简单字符串的情况
-          router.push({ path: '/HelloWorld', query: { user: { username: loginForm.value.username } } })
-        } else if (response.data && response.data.success) {
-          // 后端返回ApiResponse格式的情况
-          if (response.data.data && response.data.data.token) {
-            window.localStorage.setItem('jwt_token', response.data.data.token)
-          }
-          router.push({ path: '/HelloWorld', query: { user: response.data.data } })
+        
+        // 强制显示调试信息
+        console.log('=== 强制调试开始 ===')
+        console.log('响应对象:', response)
+        console.log('响应数据:', response.data)
+        console.log('success值:', response.data?.success)
+        console.log('success类型:', typeof response.data?.success)
+        console.log('严格等于true:', response.data?.success === true)
+        console.log('宽松等于true:', response.data?.success == true)
+        console.log('布尔转换:', !!response.data?.success)
+        
+        // 直接检查并强制跳转
+        if (response.data && response.data.success) {
+          console.log('✅ 条件通过，准备跳转')
+          localStorage.setItem('jwt_token', response.data.data.token)
+          router.push({ 
+            path: '/HelloWorld', 
+            query: { user: JSON.stringify(response.data.data.user) } 
+          })
         } else {
+          console.log('❌ 条件失败，跳转失败页面')
+          console.log('失败原因:', response.data?.message)
+          alert(response.data?.message || '登录失败')
           router.push({ path: '/Fail' })
         }
       } catch (error) {

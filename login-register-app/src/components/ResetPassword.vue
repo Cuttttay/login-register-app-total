@@ -95,17 +95,11 @@ export default {
       try {
         const response = await authAPI.resetPassword(payload)
         
-        // 处理不同的响应格式
-        if (typeof response.data === 'string' && response.data === 'OK') {
-          // 后端返回简单字符串的情况
-          alert('重置密码成功！')
-          router.push('/')
-        } else if (response.data.success) {
-          // 后端返回ApiResponse格式的情况
+        if (response.data.success) {
           alert('重置密码成功！')
           router.push('/')
         } else {
-          alert('重置失败：' + (response.data.message || '未知错误'))
+          alert(response.data.message)
         }
       } catch (error) {
         console.error('重置密码错误:', error)
@@ -126,7 +120,7 @@ export default {
           alert('验证码已发送到您的邮箱')
           startCountdown()
         } else {
-          alert('发送失败：' + response.data.message)
+          alert(response.data.message)
         }
       } catch (error) {
         console.error('发送验证码错误:', error)

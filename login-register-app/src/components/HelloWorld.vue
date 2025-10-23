@@ -14,6 +14,8 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { authAPI } from '../services/api.js'
+import { getUserFromToken, isLoggedIn, logout as authLogout } from '../utils/auth.js'
 
 export default {
   name: 'HelloWorld',
@@ -22,18 +24,75 @@ export default {
     const route = useRoute()
     const userInfo = ref(null)
 
-    onMounted(() => {
+    onMounted(async () => {
+      console.log('=== HelloWorld组件加载 ===')
+      console.log('当前路由:', route.path)
+      console.log('路由参数:', route.query)
+      
+      // 详细检查登录状态
+      const token = localStorage.getItem('jwt_token')
+      console.log('本地存储的token:', token)
+      console.log('token存在:', !!token)
+      
+      const loginStatus = isLoggedIn()
+      console.log('isLoggedIn()结果:', loginStatus)
+      
+      // 检查是否已登录
+      if (!loginStatus) {
+        console.log('❌ 未登录，跳转到登录页面')
+        router.push('/login')
+        return
+      }
+
+      console.log('✅ 已登录，继续处理')
+
       // 从路由参数获取用户信息
       if (route.query.user) {
+        console.log('从路由参数获取用户信息:', route.query.user)
         userInfo.value = JSON.parse(decodeURIComponent(route.query.user))
+        console.log('解析后的用户信息:', userInfo.value)
       }
+
+      // 尝试从token获取用户信息
+      const tokenUserInfo = getUserFromToken()
+      if (tokenUserInfo) {
+        console.log('从Token获取用户信息:', tokenUserInfo)
+        if (!userInfo.value) {
+          userInfo.value = tokenUserInfo
+        }
+      }
+
+      // 尝试调用需要认证的API
+      try {
+        console.log('尝试调用用户信息API...')
+        const response = await authAPI.getUserProfile()
+        console.log('用户信息API响应:', response.data)
+        if (response.data && response.data.success) {
+          userInfo.value = response.data.data
+        }
+      } catch (error) {
+        console.log('获取用户信息失败:', error.message)
+        // 如果API调用失败，使用token中的信息
+        if (tokenUserInfo && !userInfo.value) {
+          userInfo.value = tokenUserInfo
+        }
+      }
+      
+      console.log('最终用户信息:', userInfo.value)
     })
 
-    const logout = () => {
-      // 清除本地存储的token
-      localStorage.removeItem('jwt_token')
-      // 跳转回登录页面
-      router.push('/')
+    const logout = async () => {
+      try {
+        // 调用后端登出API
+        await authAPI.logout()
+      } catch (error) {
+        console.log('登出API调用失败:', error.message)
+      } finally {
+        // 清除本地存储的token
+        authLogout()
+        // 跳转回登录页面
+        router.push('/login')
+      }
     }
 
     return {

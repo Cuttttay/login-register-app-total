@@ -94,11 +94,11 @@ export default {
       }
       try {
         const response = await authAPI.register(payload)
-        if (response.data && response.data.success) {
+        if (response.data.success) {
           alert('注册成功，请登录')
           router.push('/login')
         } else {
-          alert('注册失败：' + (response.data.message || '未知错误'))
+          alert(response.data.message)
         }
       } catch (error) {
         alert('注册失败')
@@ -118,7 +118,7 @@ export default {
           alert('验证码已发送到您的邮箱')
           startCountdown()
         } else {
-          alert('发送失败：' + response.data.message)
+          alert(response.data.message)
         }
       } catch (error) {
         console.error('发送验证码错误:', error)
