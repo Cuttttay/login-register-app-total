@@ -4,7 +4,7 @@ import { removeToken } from '../utils/auth.js'
 
 // 创建axios实例
 const apiClient = axios.create({
-  baseURL: apiConfig.baseURL,
+  baseURL: apiConfig.backendURL, // 使用后端URL而不是baseURL
   timeout: apiConfig.timeout,
   headers: {
     'Content-Type': 'application/json'

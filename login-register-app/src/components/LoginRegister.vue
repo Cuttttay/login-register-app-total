@@ -40,7 +40,7 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { authAPI } from '../services/api.js'
 
 export default {
   name: 'LoginRegister',
@@ -53,16 +53,45 @@ export default {
     }
 
     const handleLogin = async () => {
+      console.log('=== LoginRegister登录函数被调用 ===')
+      console.log('用户名:', loginForm.value.username)
+      console.log('密码:', loginForm.value.password)
+      
       const payload = { username: loginForm.value.username, password: loginForm.value.password }
       try {
-        const response = await axios.post('http://localhost:8081/person/login', payload, { headers: { 'Content-Type': 'application/json' } })
-        if (response.data && response.data.code === '200') {
-          if (response.data.token) window.localStorage.setItem('jwt_token', response.data.token)
-          router.push({ path: '/HelloWorld', query: { user: response.data.data } })
+        console.log('准备发送登录请求...')
+        const response = await authAPI.login(payload)
+        
+        // 强制显示调试信息
+        console.log('=== 强制调试开始 ===')
+        console.log('响应对象:', response)
+        console.log('响应数据:', response.data)
+        console.log('success值:', response.data?.success)
+        console.log('success类型:', typeof response.data?.success)
+        console.log('严格等于true:', response.data?.success === true)
+        console.log('宽松等于true:', response.data?.success == true)
+        console.log('布尔转换:', !!response.data?.success)
+        
+        // 直接检查并强制跳转
+        if (response.data && response.data.success) {
+          // 登录成功：
+          localStorage.setItem('jwt_token', response.data.data.token)
+          // 建议也把用户缓存一下，HelloWorld 先用本地渲染再去拉 profile
+          localStorage.setItem('user', JSON.stringify(response.data.data.user))
+          //gpt
+          await router.push({
+            name: 'HelloWorld',
+          })
         } else {
+          console.log('❌ 条件失败，跳转失败页面')
+          console.log('失败原因:', response.data?.message)
+          alert(response.data?.message || '登录失败')
           router.push({ path: '/Fail' })
         }
       } catch (error) {
+        console.error('登录请求失败:', error)
+        console.error('错误详情:', error.response?.data || error.message)
+        alert('登录请求失败: ' + (error.response?.data?.message || error.message))
         router.push({ path: '/Fail' })
       }
     }

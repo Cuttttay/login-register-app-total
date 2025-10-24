@@ -44,11 +44,15 @@ import { authAPI } from '../services/api.js'
 import { saveToken } from '../utils/auth.js'
 
 export default {
+
+
   name: 'Login',
   setup() {
     const router = useRouter()
     const showRegister = ref(false)
     const loginForm = ref({ username: '', password: '' })
+
+
 
     const switchToRegister = () => {
       router.push('/register')
@@ -76,11 +80,13 @@ export default {
         
         // 直接检查并强制跳转
         if (response.data && response.data.success) {
-          console.log('✅ 条件通过，准备跳转')
+          // 登录成功：
           localStorage.setItem('jwt_token', response.data.data.token)
-          router.push({ 
-            path: '/HelloWorld', 
-            query: { user: JSON.stringify(response.data.data.user) } 
+// 建议也把用户缓存一下，HelloWorld 先用本地渲染再去拉 profile
+          localStorage.setItem('user', JSON.stringify(response.data.data.user))
+          //gpt
+          await router.push({
+            name: 'HelloWorld',
           })
         } else {
           console.log('❌ 条件失败，跳转失败页面')
@@ -89,9 +95,14 @@ export default {
           router.push({ path: '/Fail' })
         }
       } catch (error) {
+        console.error('登录请求失败:', error)
+        console.error('错误详情:', error.response?.data || error.message)
+        alert('登录请求失败: ' + (error.response?.data?.message || error.message))
         router.push({ path: '/Fail' })
       }
     }
+
+
 
     return {
       showRegister,
@@ -434,36 +445,36 @@ body {
     height: auto;
     flex-direction: column;
   }
-  
+
   .left-panel {
     width: 100%;
     height: auto;
     padding: 20px;
   }
-  
+
   .right-panel {
     width: 100%;
     padding: 20px;
   }
-  
+
   .left-panel h2 {
     font-size: 18px;
     margin-bottom: 10px;
   }
-  
+
   .switch-link {
     font-size: 14px;
   }
-  
+
   .right-panel h3 {
     font-size: 14px;
     margin-bottom: 10px;
   }
-  
+
   .input-group input {
     height: 36px;
   }
-  
+
   .submit-btn {
     height: 38px;
   }
